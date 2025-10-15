@@ -74,4 +74,60 @@ Key properties (with defaults):
 Output: theoretical prediction, actual throughput, success/fail counts, connections/reconnections, and comparison.
 
 
+### Client Part 2 (Main Phase + Analysis)
+
+High-throughput client with producer/worker pipeline, CSV logging, console analysis, and throughput PNG charts.
+
+#### Requirements
+- Java 17+
+- Maven 3.8+
+- Server running at `ws://localhost:8080/chat/{roomId}`
+
+#### Build
+From `assignment1/ws_hana`:
+```bash
+mvn -q -DskipTests -pl client-part2 -am package
+```
+Artifact: `client-part2/target/client-part2-1.0.0.jar`
+
+#### Run (example)
+```bash
+java \
+  -DWS_BASE=ws://localhost:8080/chat/ \
+  -DTOTAL=50000 \
+  -DROOMS=20 \
+  -DSENDERS=32 \
+  -DQUEUE_CAP=50000 \
+  -DACK_TIMEOUT_MS=60000 \
+  -DBUCKET_SEC=10 \
+  -DCSV_DIR=client-part2/results \
+  -DCSV_PREFIX=run \
+  -DCHART_DIR=client-part2/charts \
+  -DPREDICT_RTT_MS=50 \
+  -DCONNECT_TIMEOUT_SECONDS=10 \
+  -jar client-part2/target/client-part2-1.0.0.jar
+```
+
+Key properties (defaults):
+- `WS_BASE` (`ws://localhost:8080/chat/`), `TOTAL` (500000), `ROOMS` (20)
+- `SENDERS` (max(8, CPU cores × 4)), `QUEUE_CAP` (50000)
+- `ACK_TIMEOUT_MS` (60000), `CONNECT_TIMEOUT_SECONDS` (10)
+- `BUCKET_SEC` (10), `CSV_DIR` (`client-part2/results`), `CSV_PREFIX` (`run`)
+- `CHART_DIR` (`client-part2/charts`)
+- `PREDICT_RTT_MS` (50), `CONNECTION_OVERHEAD_MS` (5)
+- Optional: `PREDICT_K_PER_ROOM` (600), `SUMMARY_PATH` (override summary CSV path)
+
+Outputs:
+- CSV per run: `client-part2/results/run_YYYYMMDD_HHMMSS.csv`
+  - Columns: `timestamp,messageType,latencyMs,statusCode,roomId`
+- Summary: `client-part2/summary.csv` (append one line per run; override with `-DSUMMARY_PATH=...`)
+- Chart PNG: `client-part2/charts/throughput_<runId>_S<SENDERS>_Q<QUEUE_CAP>_TO<ACK_TIMEOUT_S>s.png`
+
+Console prints:
+- Success/fail/retries/connections/reconnections, wall time, throughput
+- Little’s Law predicted vs actual
+- Latency stats (mean, p50, p95, p99, min, max)
+- Per-room throughput, per-type counts, per-time-bucket throughput
+
+
 
